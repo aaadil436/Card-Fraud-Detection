@@ -1,0 +1,88 @@
+# Transaction Class
+
+
+from datetime import datetime
+
+
+class Transaction:
+    card_number: str
+    transaction_time: datetime
+    amount: float
+
+    def __init__(self, card_number: str, transaction_time: str, amount: float):
+        self.card_number = card_number
+        self.transaction_time = datetime.strptime(transaction_time, '%Y-%m-%dT%H:%M:%S')
+        self.amount = amount if type(amount) == float else float(amount)
+        
+        
+# Main Code       
+import csv
+from datetime import datetime, timedelta
+
+from transaction import Transaction
+
+
+# set csv file path here
+path = './'
+
+
+# function to read csv file data
+def read_file(file_name):
+    data = []
+    try:
+        with open(path + file_name, 'r') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=',')
+            for row in reader:
+                data.append(dict(row))
+    except IOError:
+        print('File reading error')
+    return data
+
+
+# function to demonstrate the required algorithm
+# input parameters - collection of transactions, threshold
+# output - gives a set of fraudulent numbers
+def get_fraudulent_numbers_from_last_24_hours(transactions: list, threshold_value: int) -> set:
+    numbers = set()
+    # initialize transaction_amount_per_day
+    tapd = dict()
+    now = datetime.now()
+    last_24_hours = now - timedelta(hours=24)
+    # iterate through each transaction
+    for transaction in transactions:
+        if transaction.card_number not in tapd:
+            tapd[transaction.card_number] = 0
+        # Check if transaction_time is in last 24 hours
+        if last_24_hours <= transaction.transaction_time < now:
+            tapd[transaction.card_number] += transaction.amount
+        if tapd[transaction.card_number] > threshold:
+            numbers.add(transaction.card_number)
+
+    return numbers
+
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    # read the csv file by giving the file name
+    raw_data = read_file('data.csv')
+    # initialize data
+    data = []
+    # Convert raw data to transaction class list
+    for rd in raw_data:
+        data.append(Transaction(rd['Card Number'], rd['Transaction Time'], rd['Amount']))
+    print('File is loaded!')
+    # Get Threshold value
+    while True:
+        try:
+            threshold = int(input('Enter Threshold Value: '))
+            break
+        except ValueError as e:
+            print('You Have Entered Invalid Threshold Value\n'
+                  'Please Enter Valid Value\n'
+                  '-------------------------------------------------------------------------------------')
+    fraudulent_numbers = get_fraudulent_numbers_from_last_24_hours(data, threshold)
+    if len(fraudulent_numbers) > 0:
+        print('Fraudulent Credit Card Numbers are:\n' + '\n'.join(list(fraudulent_numbers)))
+    else:
+        print('No Fraudulent Credit Card Number Exist!')
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
