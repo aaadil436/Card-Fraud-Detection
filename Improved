@@ -1,0 +1,83 @@
+Its an improved version, it will not catch the transactions of the last 24 hours, but any 24hrs in the past.
+
+from datetime import datetime,timedelta
+import csv
+
+# A transaction class has been created which will be used to convert transactions in the "data.csv" file into transaction objects and then each attribute of the transaction object will be used for logic
+class transaction:
+    def __init__(self, card,timestamp,amount):
+        self.card=card
+        self.timestamp=datetime.strptime(timestamp,"%Y-%m-%dT%H:%M:%S") # strpmethod of datetime class is used to convert the given string format into datetime object.
+        self.amount=amount if type(amount)==float else float(amount)
+        
+        
+def slidingwindow(li,threshold):
+    fraud_cards={}
+    output_cards=[]
+   
+    window=timedelta(hours=24)
+    
+    for i in li:
+        for j in range(len(i)):
+            fraud_cards[i[j].card]=i[j].amount
+            for k in range(len(i)):
+                if i[j].timestamp!=i[k].timestamp:
+                    if i[k].timestamp- i[j].timestamp<window and (i[k].timestamp- i[j].timestamp)>timedelta(hours=0) :
+                        
+                        
+                        fraud_cards[i[j].card]=fraud_cards[i[j].card]+i[k].amount
+                        
+            if fraud_cards[i[j].card]>=threshold:
+                output_cards.append(i[j].card)
+                
+                break
+    
+    # all transactions of the particular card is taken and each transaction is checked if it had happened within the last 24 hours.
+    # If so, all the correspoding amounts are added and then checked if they had exceeded the threshold value. If yes, the card number will be added to the set.
+                
+                
+    return output_cards
+                        
+                        
+            
+        
+if __name__ == "__main__":
+    
+    li=[]
+    with open('data.csv') as file:
+        read=csv.DictReader(file,delimiter=",")
+
+        
+        for row in read:
+
+            li.append(transaction(row["Card_Number"],row["Transactions"],row["Amount"]))
+            
+            
+            
+        # File has been loaded in the list   
+    
+        total_card_set=set()
+        for i in li:
+            total_card_set.add(i.card)
+            
+        # A set is created to hold all the card numbers involved in all the transactions present in the "data.csv".
+            
+        card_transaction_list=[]    
+        for i in total_card_set:
+            individual_card_transaction=[]
+            for j in li:
+                if j.card==i:
+                    individual_card_transaction.append(j)
+                    
+                    
+            card_transaction_list.append(individual_card_transaction)
+            
+        ### A new list is created which is a 2D list and each list in the "card_transaction_list" holds all the transactions of a particular card 
+        
+            
+            
+            
+    # An input of threshold value will be taken and the program will output all the card_numbers that have transactions sum within any 24 hours exceeding the threshold value.        
+    threshold=int(input("Please enter the Threshold Amount:    "))
+    print("These cards have anomaly:    ", slidingwindow( card_transaction_list,threshold))
+        
